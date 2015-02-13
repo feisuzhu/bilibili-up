@@ -2,7 +2,7 @@ import requests
 import random
 import sys
 
-resp = requests.get('http://www.bilibili.com/index/ding.json?rnd=' + str(random.random()), timeout=1)
+resp = requests.get('http://www.bilibili.com/index/ding.json?rnd=' + str(random.random()), timeout=2)
 rst = resp.json()[sys.argv[1]]
 rst = [i[1]['title'] for i in sorted(rst.items())]
 kw = sys.argv[2].decode('utf-8')
