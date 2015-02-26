@@ -51,7 +51,7 @@ for c, p in zip(cookies, proxies):
 
 random.shuffle(sessions)
 
-video_url = 'http://www.bilibili.com/video/av%s/' % options.aid
+video_url = 'http://www.bilibili.com/video/av%s/index_%s.html' % (options.aid, options.pid)
 
 while True:
     t = arrow.now()
@@ -60,7 +60,7 @@ while True:
     print "[%s av%d] %s" % (t.format('HH:mm:ss'), options.aid, dm),
 
     try:
-        with gevent.Timeout(20):
+        with gevent.Timeout(15):
             session = sessions.pop(0)
             page = session.get(video_url)
             cid = int(re.findall(r'cid=([0-9]+)&aid=%s' % options.aid, page.content)[0])
@@ -82,7 +82,7 @@ while True:
                 print 'Fail'
                 continue
 
-            print '   Done'
+            print 'Done'
             sessions.append(session)
 
     except (Exception, gevent.Timeout):

@@ -37,28 +37,16 @@ def solve(image):
     return captcha['text']
 
 
-def do_reg(account, password, nick):
-
-    if options.proxy:
-        proxy = Proxy({
-            'proxyType': ProxyType.MANUAL,
-            'httpProxy': options.proxy,
-            'ftpProxy': '',
-            'sslProxy': options.proxy,
-            'noProxy': '',
-        })
-    else:
-        proxy = Proxy({'proxyType': ProxyType.DIRECT})
-
-    driver = webdriver.Firefox(proxy=proxy)
-    driver.implicitly_wait(30)
+def do_reg(driver, mail, account, password, nick):
+    driver.delete_all_cookies()
 
     driver.get("https://account.bilibili.com/register/mail")
     driver.find_element_by_name("uname").clear()
     driver.find_element_by_name("uname").send_keys(account + "@163.com")
     driver.find_element_by_id("vdCodeTxt").click()
 
-    '''
+    # '''
+    import requests
     print 'Get captcha'
     resp = requests.get('https://account.bilibili.com/captcha')
     print 'Solve captcha'
@@ -66,10 +54,12 @@ def do_reg(account, password, nick):
     driver.delete_cookie('sid')
     driver.add_cookie({'name': 'sid', 'value': resp.cookies['sid']})
     print 'End solve'
-    '''
+    # '''
 
+    '''
     print 'Captcha:'
     captcha = raw_input().strip()
+    '''
 
     driver.find_element_by_id("vdCodeTxt").clear()
     driver.find_element_by_id("vdCodeTxt").send_keys(captcha)
@@ -78,8 +68,7 @@ def do_reg(account, password, nick):
 
     driver.find_element_by_link_text(u"查看验证邮箱")
 
-    mail = webdriver.Firefox(proxy=Proxy({'proxyType': ProxyType.DIRECT}))
-    mail.implicitly_wait(30)
+    mail.delete_all_cookies()
 
     mail.get('http://mail.163.com')
     mail.find_element_by_id("idInput").click()
@@ -88,6 +77,9 @@ def do_reg(account, password, nick):
     mail.find_element_by_id("pwdInput").click()
     mail.find_element_by_id("pwdInput").clear()
     mail.find_element_by_id("pwdInput").send_keys(password)
+
+    time.sleep(2)
+
     mail.find_element_by_id("loginBtn").click()
 
     mail.find_element_by_id("_mail_tree_1_50count").click()
@@ -101,7 +93,6 @@ def do_reg(account, password, nick):
 
     url = mail.find_element_by_partial_link_text("checkMail").get_attribute('href')
 
-    mail.quit()
     driver.get(url)
 
     driver.find_element_by_name("uname").clear()
@@ -112,9 +103,28 @@ def do_reg(account, password, nick):
 
     time.sleep(1)
 
+if options.proxy:
+    print 'PROXY!', options.proxy
+    proxy = Proxy({
+        'proxyType': ProxyType.MANUAL,
+        'httpProxy': options.proxy,
+        'ftpProxy': '',
+        'sslProxy': options.proxy,
+        'noProxy': '',
+    })
+else:
+    proxy = Proxy({'proxyType': ProxyType.DIRECT})
+
+driver = webdriver.Firefox(proxy=proxy)
+driver.implicitly_wait(30)
+mail = webdriver.Firefox(proxy=Proxy({'proxyType': ProxyType.DIRECT}))
+mail.implicitly_wait(30)
+
+try:
+    for name, pwd in csv.reader(open(options.list)):
+        print '----------------------'
+        print name, pwd
+        do_reg(driver, mail, name, pwd, name)
+finally:
+    mail.quit()
     driver.quit()
-
-
-for name, pwd in csv.reader(open(options.list)):
-    print name, pwd
-    do_reg(name, pwd, name)
