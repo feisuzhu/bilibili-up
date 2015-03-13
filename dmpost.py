@@ -37,25 +37,35 @@ dmpool = [i.strip() for i in open(options.dmpool).read().decode('utf-8').split('
 cookies = [json.loads(i) for i in open(options.cookies).read().split('\n') if i]
 proxies = [i.strip() for i in open(options.proxies).read().split('\n') if i]
 
-sessions = []
-for c, p in zip(cookies, proxies):
-    s = requests.session()
-    s.cookies.update(c)
-    s.proxies.update({'http': 'http://' + p})
-    s.headers.update({
-        'Origin': 'https://secure.bilibili.com',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/28.0.1500.95 Safari/537.36 SE 2.X MetaSr 1.0',
-        'X-Requested-With': 'ShockwaveFlash/13.0.0.206',
-    })
-    sessions.append(s)
+sessions = None
 
-random.shuffle(sessions)
+
+def build_sessions():
+    global sessions
+    sessions = []
+
+    for c, p in zip(cookies, proxies):
+        s = requests.session()
+        s.cookies.update(c)
+        s.proxies.update({'http': 'http://' + p})
+        s.headers.update({
+            'Origin': 'https://secure.bilibili.com',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/28.0.1500.95 Safari/537.36 SE 2.X MetaSr 1.0',
+            'X-Requested-With': 'ShockwaveFlash/13.0.0.206',
+        })
+        sessions.append(s)
+
+    random.shuffle(sessions)
+
+build_sessions()
 
 video_url = 'http://www.bilibili.com/video/av%s/index_%s.html' % (options.aid, options.pid)
 
 while True:
     t = arrow.now()
     dm = random.choice(dmpool)[:16] + 'poi'
+
+    sessions or build_sessions()
 
     print "[%s av%d] %s" % (t.format('HH:mm:ss'), options.aid, dm),
 
@@ -88,6 +98,7 @@ while True:
     except (Exception, gevent.Timeout):
         import traceback
         traceback.print_exc()
+        gevent.sleep(0.1)
         continue
 
     time.sleep(options.post_interval)
